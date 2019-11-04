@@ -1,0 +1,10 @@
+umap-learn
+numpy=1.16.1
+tensorflow==1.15
+keras
+opencv-python
+scipy
+sklearn
+imutils
+pandas
+matplotlib
