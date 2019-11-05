@@ -4,22 +4,26 @@ import argparse
 import torch
 import torch.backends.cudnn as cudnn
 import numpy as np
-from data import cfg_mnet, cfg_re50
-from layers.functions.prior_box import PriorBox
-from utils.nms.py_cpu_nms import py_cpu_nms
 import cv2
-from models.retinaface import RetinaFace
-from utils.box_utils import decode, decode_landm
 import time
 import random
 import imageio
+import imutils
+
+from data import cfg_mnet, cfg_re50
+from layers.functions.prior_box import PriorBox
+from utils.nms.py_cpu_nms import py_cpu_nms
+from models.retinaface import RetinaFace
+from utils.box_utils import decode, decode_landm
+from imutils.video import FileVideoStream
+from imutils.video import FPS
+from pathlib import Path
 
 parser = argparse.ArgumentParser(description='Retinaface')
 
-parser.add_argument('-m', '--trained_model', default='./weights/Resnet50_Final.pth',
-                    type=str, help='Trained state_dict file path to open')
+parser.add_argument('-m', '--trained_model', default='./weights/Resnet50_Final.pth', type=str, help='Trained state_dict file path to open')
 parser.add_argument('--network', default='resnet50', help='Backbone network mobile0.25 or resnet50')
-parser.add_argument('--cpu', action="store_true", default=False, help='Use cpu inference')
+parser.add_argument('--cpu', action="store_true", default=True, help='Use cpu inference')
 parser.add_argument('--confidence_threshold', default=0.02, type=float, help='confidence_threshold')
 parser.add_argument('--top_k', default=5000, type=int, help='top_k')
 parser.add_argument('--nms_threshold', default=0.4, type=float, help='nms_threshold')
@@ -81,20 +85,31 @@ if __name__ == '__main__':
     cudnn.benchmark = False
     device = torch.device("cpu" if args.cpu else "cuda")
     net = net.to(device)
-
     resize = 1
 
     #IMAGE LOAD
-    cap = cv2.VideoCapture('./curve/trailer.m4v')
-    image_path = "./curve/test.jpg"
-    
-    
-    while(cap.isOpened()):
-        ret, frame = cap.read()
+    args = {}
+    args["video"] = "C:/Users/Admin/git/Pytorch_Retinaface/curve/trailer.m4v"
+        
+    fvs = FileVideoStream(args["video"],queueSize=300).start()
+    time.sleep(1.0)
+    # loop over frames from the video file stream
+    framecount = 0
+    fps = FPS().start()
+    print ('before')
+    while fvs.more():
+        print ('after')
+        frame = fvs.read()
         img_raw = frame
-        
-        #img_raw = cv2.imread(image_path, cv2.IMREAD_COLOR)
-        
+		#framecount = framecount + 1
+        #print (framecount)
+        #img_raw = None
+		
+        #if framecount%5==0:
+        #    img_raw = frame
+        #else:
+        #    continue
+    
         img = np.float32(img_raw)
         im_height, im_width, _ = img.shape
         scale = torch.Tensor([img.shape[1], img.shape[0], img.shape[1], img.shape[0]])
@@ -107,7 +122,6 @@ if __name__ == '__main__':
         loc, conf, landms = net(img)  # forward pass
         print('net forward time: {:.4f}'.format(time.time() - tic))
 
-        
         priorbox = PriorBox(cfg, image_size=(im_height, im_width))
         priors = priorbox.forward()
         priors = priors.to(device)

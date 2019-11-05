@@ -1,6 +1,5 @@
 umap-learn
-numpy=1.16.1
-tensorflow==1.15
+numpy==1.16.1
 keras
 opencv-python
 scipy
@@ -8,3 +7,5 @@ sklearn
 imutils
 pandas
 matplotlib
+torch===1.3.0
+torchvision===0.4.1
