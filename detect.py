@@ -91,7 +91,7 @@ def inference(img_raw, device, cfg, net, resize, frame_list):
     
     #frame_list.pop(0)
     os.remove(frame_list)
-    
+        
     lock.release()
     
     img = np.float32(img_raw)
@@ -178,10 +178,6 @@ def inference(img_raw, device, cfg, net, resize, frame_list):
 if __name__ == '__main__':
     torch.set_grad_enabled(False)
     
-    ####x = threading.Thread(target=thread_function, args=(1,))
-    #x.start()
-    #x.join()
-    
     if not os.path.exists(FRAMES_DIR):
         os.makedirs(FRAMES_DIR)
     
@@ -234,20 +230,9 @@ if __name__ == '__main__':
     print("[INFO] elasped time: {:.2f}".format(fps.elapsed()))
     print("[INFO] approx. FPS: {:.2f}".format(fps.fps()))
     
-    
+    #Shows
     frame_list = [f for f in glob.glob("{}\\*.jpg".format(FRAMES_DIR))]
     func = partial(inference, img_raw, device, cfg,  net, resize)
     
     p = Pool(3)
     p.map(func, frame_list)
-    
-    #x = threading.Thread(target=inference, args=(img_raw, net, resize))
-    #x.start()
-    #x.join()
-    
-    #inference(img_raw, net, resize)
-    
-    
-    
-    
-    
