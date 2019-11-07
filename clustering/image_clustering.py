@@ -5,13 +5,13 @@ from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 import numpy as np
 import keras
-from keras import applications
 from keras.applications.resnet50 import preprocess_input
 from keras.preprocessing import image
 
+
 class image_clustering:
 
-	def __init__(self, folder_path="data", n_clusters=10, max_examples=None, use_imagenets='mobilenetv2', use_pca=False):
+	def __init__(self, folder_path="data", n_clusters=10, max_examples=None, use_imagenets=False, use_pca=False):
 		paths = os.listdir(folder_path)
 		if max_examples == None:
 			self.max_examples = len(paths)
@@ -29,7 +29,6 @@ class image_clustering:
 		del paths 
 		try:
 			shutil.rmtree("output")
-			print ('remote output')
 		except FileExistsError:
 			pass
 		print("\n output folders created.")
@@ -40,63 +39,57 @@ class image_clustering:
 
 	def load_images(self):
 		self.images = []
-		for image in self.image_paths:
-			impath = self.folder_path + "\\" + image
+		for image_path in self.image_paths:
+			# self.images.append(cv2.cvtColor(cv2.resize(cv2.imread(self.folder_path + "\\" + image), (224,224)), cv2.COLOR_BGR2RGB))
+			img = image.load_img(self.folder_path + "\\" + image_path, target_size=(224, 224))
 			
-			if os.path.isfile(impath):
-				# load image setting the image size to 224 x 224
-				img = image.load_img(impath, target_size=(224, 224))
-				
-				# convert image to numpy array
-				x = image.img_to_array(aimg)
-				
-				# the image is now in an array of shape (3, 224, 224)
-				# but we need to expand it to (1, 2, 224, 224) as Keras is expecting a list of images
-				x = np.expand_dims(x, axis=0)
-				x = preprocess_input(x)
-				
-				# extract the features
-				features = pargs.model.predict(x)[0]
-				feature_np = np.array(features)
-				self.images.append(feature_np.flatten())
+			# convert image to numpy array
+			x = image.img_to_array(img)
+            # the image is now in an array of shape (3, 224, 224)
+			# but we need to expand it to (1, 2, 224, 224) as Keras is expecting a list of images
+			x = np.expand_dims(x, axis=0)
+			x = preprocess_input(x)
+
+			self.images.append(x)
+		
+		# self.images = np.float32(self.images).reshape(len(self.images), -1)
+		# self.images /= 255
 		
 		print("\n " + str(self.max_examples) + " images from the \"" + self.folder_path + "\" folder have been loaded in a random order.")
 
 	def get_new_imagevectors(self):
 		if self.use_imagenets == False:
-			print ("USE_IMAGENET FALSE")
 			self.images_new = self.images
 		else:
-			model1 = None
-			print ("USE KERAS MODEL {}".format(use_imagenets.lower()))
 			if use_imagenets.lower() == "vgg16":
-				model1 = keras.applications.vgg19.vgg19(include_top=False, weights="imagenet", input_shape=(224,224,3))
+				model1 = keras.applications.vgg19.vgg19(include_top=False, weights="imagenet", input_shape=(224, 224, 3))
 			elif use_imagenets.lower() == "vgg19":
-				model1 = keras.applications.vgg19.vgg19(include_top=False, weights="imagenet", input_shape=(224,224,3))
+				model1 = keras.applications.vgg19.vgg19(include_top=False, weights="imagenet", input_shape=(224, 224, 3))
 			elif use_imagenets.lower() == "resnet50":
-				model1 = keras.applications.resnet50.ResNet50(include_top=False, weights="imagenet", input_shape=(224,224,3))
+				model1 = keras.applications.resnet50.ResNet50(include_top=False, weights="imagenet", input_shape=(224, 224, 3))
 			elif use_imagenets.lower() == "xception":
-				model1 = keras.applications.xception.Xception(include_top=False, weights='imagenet',input_shape=(224,224,3))
+				model1 = keras.applications.xception.Xception(include_top=False, weights='imagenet', input_shape=(224, 224, 3))
 			elif use_imagenets.lower() == "inceptionv3":
-				keras.applications.inception_v3.InceptionV3(include_top=False, weights='imagenet', input_shape=(224,224,3))
+				keras.applications.inception_v3.InceptionV3(include_top=False, weights='imagenet', input_shape=(224, 224, 3))
 			elif use_imagenets.lower() == "inceptionresnetv2":
-				model1 = keras.applications.inception_resnet_v2.InceptionResNetV2(include_top=False, weights='imagenet', input_shape=(224,224,3))
+				model1 = keras.applications.inception_resnet_v2.InceptionResNetV2(include_top=False, weights='imagenet', input_shape=(224, 224, 3))
 			elif use_imagenets.lower() == "densenet":
-				model1 = keras.applications.densenet.DenseNet201(include_top=False, weights='imagenet', input_shape=(224,224,3))
+				model1 = keras.applications.densenet.DenseNet201(include_top=False, weights='imagenet', input_shape=(224, 224, 3))
 			elif use_imagenets.lower() == "mobilenetv2":
-				model1 = keras.applications.mobilenetv2.MobileNetV2(input_shape=(224,224,3), alpha=1.0, depth_multiplier=1, include_top=False, weights='imagenet', pooling=None)
+				model1 = keras.applications.mobilenetv2.MobileNetV2(input_shape=(224, 224, 3), alpha=1.0, depth_multiplier=1, include_top=False, weights='imagenet', pooling=None)
 			else:
 				print("\n\n Please use one of the following keras applications only [ \"vgg16\", \"vgg19\", \"resnet50\", \"xception\", \"inceptionv3\", \"inceptionresnetv2\", \"densenet\", \"mobilenetv2\" ] or False")
 				sys.exit()
+				
+			feature_list = []
+			
+			for pre in self.images:
+				features = model1.predict(pre)[0]
+				feature_np = np.array(features)
+				feature_list.append(feature_np.flatten())
+				    
+				images_temp = np.array(feature_list)
 
-			#pred = model1.predict(self.images)
-			pred = model1.predict(self.images)[0]
-			feature_np = np.array(pred)
-			images_temp = feature_np.flatten()
-			
-			#images_temp = pred.reshape(self.images.shape[0], -1)
-			
-			
 			if self.use_pca == False: 
 				self.images_new = images_temp
 			else: 
@@ -108,32 +101,31 @@ class image_clustering:
 		model = KMeans(n_clusters=self.n_clusters, n_jobs=-1, random_state=728)
 		model.fit(self.images_new)
 		predictions = model.predict(self.images_new)
-		#print(predictions)
+		# print(predictions)
 		for i in range(self.max_examples):
-			shutil.copy2(self.folder_path+"\\"+self.image_paths[i], "output\cluster"+str(predictions[i]))
-			print ("output\cluster"+str(predictions[i]))
-		
+			shutil.copy2(self.folder_path + "\\" + self.image_paths[i], "output\cluster" + str(predictions[i]))
 		print("\n Clustering complete! \n\n Clusters and the respective images are stored in the \"output\" folder.")
+
 
 if __name__ == "__main__":
 
 	print("\n\n \t\t START\n\n")
 
-	number_of_clusters = 5 # cluster names will be 0 to number_of_clusters-1
+	number_of_clusters = 6  # cluster names will be 0 to number_of_clusters-1
 
-	data_path = "C:\\Users\\ribeirfi\git\\Pytorch_Retinaface\\tmp" # path of the folder that contains the images to be considered for the clustering (The folder must contain only image files)
+	data_path = "C:\\Users\\ribeirfi\git\\Pytorch_Retinaface\\tmp"  # path of the folder that contains the images to be considered for the clustering (The folder must contain only image files)
 
-	max_examples = None # number of examples to use, if "None" all of the images will be taken into consideration for the clustering
+	max_examples = 500  # number of examples to use, if "None" all of the images will be taken into consideration for the clustering
 	# If the value is greater than the number of images present  in the "data_path" folder, it will use all the images and change the value of this variable to the number of images available in the "data_path" folder. 
 
-	use_imagenets = 'DenseNet'
+	use_imagenets = 'ResNet50'
 	# choose from: "Xception", "VGG16", "VGG19", "ResNet50", "InceptionV3", "InceptionResNetV2", "DenseNet", "MobileNetV2" and "False" -> Default is: False
 	# you have to use the correct spelling! (case of the letters are irrelevant as the lower() function has been used)
 
 	if use_imagenets == False:
 		use_pca = False
 	else:
-		use_pca = False # Make it True if you want to use PCA for dimentionaity reduction -> Default is: False
+		use_pca = False  # Make it True if you want to use PCA for dimentionaity reduction -> Default is: False
 
 	temp = image_clustering(data_path, number_of_clusters, max_examples, use_imagenets, use_pca)
 	temp.load_images()
