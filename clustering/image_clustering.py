@@ -40,7 +40,7 @@ class image_clustering:
 	def load_images(self):
 		self.images = []
 		for image_path in self.image_paths:
-			# self.images.append(cv2.cvtColor(cv2.resize(cv2.imread(self.folder_path + "\\" + image), (224,224)), cv2.COLOR_BGR2RGB))
+			
 			img = image.load_img(self.folder_path + "\\" + image_path, target_size=(224, 224))
 			
 			# convert image to numpy array
@@ -51,9 +51,6 @@ class image_clustering:
 			x = preprocess_input(x)
 
 			self.images.append(x)
-		
-		# self.images = np.float32(self.images).reshape(len(self.images), -1)
-		# self.images /= 255
 		
 		print("\n " + str(self.max_examples) + " images from the \"" + self.folder_path + "\" folder have been loaded in a random order.")
 
@@ -75,20 +72,20 @@ class image_clustering:
 				model1 = keras.applications.inception_resnet_v2.InceptionResNetV2(include_top=False, weights='imagenet', input_shape=(224, 224, 3))
 			elif use_imagenets.lower() == "densenet":
 				model1 = keras.applications.densenet.DenseNet201(include_top=False, weights='imagenet', input_shape=(224, 224, 3))
-			elif use_imagenets.lower() == "mobilenetv2":
-				model1 = keras.applications.mobilenetv2.MobileNetV2(input_shape=(224, 224, 3), alpha=1.0, depth_multiplier=1, include_top=False, weights='imagenet', pooling=None)
+			elif use_imagenets.lower() == "mobilenet_v2":
+				model1 = keras.applications.MobileNetV2(input_shape=(224, 224, 3), alpha=1.0, include_top=False, weights='imagenet', pooling=None)
 			else:
-				print("\n\n Please use one of the following keras applications only [ \"vgg16\", \"vgg19\", \"resnet50\", \"xception\", \"inceptionv3\", \"inceptionresnetv2\", \"densenet\", \"mobilenetv2\" ] or False")
+				print("\n\n Please use one of the following keras applications only [ \"vgg16\", \"vgg19\", \"resnet50\", \"xception\", \"inceptionv3\", \"inceptionresnetv2\", \"densenet\", \"mobilenet_v2\" ] or False")
 				sys.exit()
 				
 			feature_list = []
 			
 			for pre in self.images:
-				features = model1.predict(pre)[0]
-				feature_np = np.array(features)
+				img_all_features = model1.predict(pre)
+				feature_np = np.array(img_all_features)
 				feature_list.append(feature_np.flatten())
-				    
-				images_temp = np.array(feature_list)
+			
+			images_temp = np.array(feature_list)
 
 			if self.use_pca == False: 
 				self.images_new = images_temp
@@ -111,14 +108,14 @@ if __name__ == "__main__":
 
 	print("\n\n \t\t START\n\n")
 
-	number_of_clusters = 6  # cluster names will be 0 to number_of_clusters-1
+	number_of_clusters = 8  # cluster names will be 0 to number_of_clusters-1
 
 	data_path = "C:\\Users\\ribeirfi\git\\Pytorch_Retinaface\\tmp"  # path of the folder that contains the images to be considered for the clustering (The folder must contain only image files)
 
 	max_examples = 500  # number of examples to use, if "None" all of the images will be taken into consideration for the clustering
 	# If the value is greater than the number of images present  in the "data_path" folder, it will use all the images and change the value of this variable to the number of images available in the "data_path" folder. 
 
-	use_imagenets = 'ResNet50'
+	use_imagenets = 'resnet50'
 	# choose from: "Xception", "VGG16", "VGG19", "ResNet50", "InceptionV3", "InceptionResNetV2", "DenseNet", "MobileNetV2" and "False" -> Default is: False
 	# you have to use the correct spelling! (case of the letters are irrelevant as the lower() function has been used)
 
